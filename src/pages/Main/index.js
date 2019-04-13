@@ -13,7 +13,7 @@ export default class Main extends Component {
   }
 
   async componentDidMount(){
-    const box = AsyncStorage.getItem('@RocketBox:box');
+    const box = await AsyncStorage.getItem('@RocketBox:box');
     if(box) {
       this.props.navigation.navigate('Box');
     }

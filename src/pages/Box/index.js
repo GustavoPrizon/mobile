@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import ImagePicker from 'react-native-image-picker';
 
 import{ distanceInWords } from 'date-fns';
 import pt from 'date-fns/locale/pt';
@@ -16,11 +17,32 @@ export default class Box extends Component {
     //this.subscribeToNewFiles();
 
      const box = await AsyncStorage.getItem('@RocketBox:box');
-     console.log(box);
      const response = await api.get(`boxes/${box}`);
 
      this.setState({ box: response.data });
   }
+
+  handleUpload = () => {
+    ImagePicker.launchImageLibrary({}, async upload =>{
+      if(upload.error){
+        console.log('ImagePicker error');
+      }else if(upload.didCancel){
+        console.log('Canceled by user');
+      }else{
+        const data = new FormData();
+
+        const [prefix, suffix] = upload.fileName.split('.');
+        const ext = suffix.toLowerCase()=== 'heic' ? 'jpg' : suffix;
+
+        data.append('file', {
+          uri: upload.uri,
+          type: upload.type,
+          name: `${prefix}.${ext}`
+        });
+          api.post(`boxes/${this.state.box._id}`, data);
+      }
+    });
+  };
 
   renderItem = ({ item }) =>(
     <TouchableOpacity
@@ -34,7 +56,7 @@ export default class Box extends Component {
 
      <Text style={styles.fileDate}>
       há {distanceInWords(item.createdAd, new Date(),{
-            locale:pt
+            locale: pt
           })}
      </Text>
     </TouchableOpacity>
@@ -53,6 +75,10 @@ export default class Box extends Component {
           ItemSeparatorComponent={() => <View style={styles.separator}/>}
           renderItem={this.renderItem}
         />
+
+        <TouchableOpacity style={styles.fab} onPress={this.handleUpload}>
+          <Icon name='cloud-upload' size={24} color='#FFF'/>
+        </TouchableOpacity>
       </View>
     );
   }
